@@ -1,0 +1,126 @@
+//copyright 2020 Alexander I Rusich
+
+
+
+#pragma once
+#include <SparkFun_GridEYE_Arduino_Library.h>
+#include "oled.h"
+
+
+class CGridEye{
+  
+private:
+#define HOT 40
+#define COLD 20
+#define TLIMIT -400.0
+
+// This table can be of type int because we map the pixel 
+// temperature to 0-3. Temperatures are reported by the 
+// library as doubles
+
+long last=0;
+int pixelTable[64];
+double temperature=0;
+double vavg=0.0;
+String pixelStr;
+
+GridEYE grideye;
+
+COLED Display;
+
+
+public:
+CGridEye(){}
+
+void setup() {
+
+  // Start your preferred I2C object 
+
+  // Library assumes "Wire" for I2C but you can pass something else with begin() if you like
+  grideye.begin(0X69);
+
+   Display.setup();
+
+  
+
+
+}
+
+void loop() {
+  bool flag=false;
+
+  
+  Display.Clear();
+ 
+  if (millis()>last+20000){
+    last=millis();
+ 
+  // loop through all 64 pixels on the device and map each double value to a number
+  // between 0 and 3 using the HOT and COLD values we set at the top of the sketch
+  temperature=grideye.getDeviceTemperature();
+  Serial.print("Sensor Temperature: ");
+  Serial.println(temperature);
+  double vx=0.0;
+  double vy=0.0;
+  double vtot=0.0;
+
+  double vmin,vmax;
+
+
+  for(unsigned char i = 0; i < 64; i++){
+   double val=grideye.getPixelTemperature(i);
+
+   if (val<TLIMIT) val=grideye.getPixelTemperatureHot(i);
+   if(flag){
+    Display.FlashPrint(val);
+   }
+   if (i==0){
+    vmin=val;
+    vmax=val;
+   }
+
+  if(val<vmin) vmin=val;
+  if(val>vmax) vmax=val;
+
+   vtot+=val;
+  }
+
+  vavg=vtot/64.0;
+     Display.Print(vmin,0,0);
+   Display.Print(vmax,35,0);
+    Display.Print(vtot/64.0,0,40);
+   Display.Show();
+
+  }
+   
+  for(unsigned char i = 0; i < 64; i++){
+    double  y=1+i/8;
+    double  x=1+i%8;
+   
+  double val=grideye.getPixelTemperature(i);
+  if (val<TLIMIT) val=grideye.getPixelTemperatureHot(i);
+
+
+/*
+  if (vavg>0){
+    if(val>vavg+3.0)  Display.Pt((int) x-1,(int) y-1);
+  }
+  else{
+   if(val>temperature)  Display.Pt((int) x-1,(int) y-1);
+  }
+*/
+
+ if(val>vavg+5.0)  Display.Pt((int) x-1,(int) y-1);
+
+    
+   Serial.print(val);
+   Serial.print(" ");
+  
+   if(i%8==7)   Serial.println();
+  }
+
+
+
+  delay(10);
+}
+};
