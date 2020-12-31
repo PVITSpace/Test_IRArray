@@ -1,0 +1,81 @@
+//copyright 2020 Alexander I Rusich
+
+#pragma once
+
+#include <SFE_MicroOLED.h> //Click here to get the library: http://librarymanager/All#SparkFun_Micro_OLED
+
+
+
+class COLED{
+
+  int MIDDLE_Y;
+  int MIDDLE_X;
+
+  MicroOLED *oled;
+public:
+  COLED(){
+    oled=new MicroOLED(9,1);
+    }
+  
+  ~COLED(){
+    delete oled;
+    }
+    
+  void setup(){
+    
+    Wire.begin(); //Set up I2C bus
+  
+    oled->begin();     // Initialize the OLED
+    oled->clear(PAGE); // Clear the display's internal memory
+    oled->clear(ALL);  // Clear the library's display buffer
+    oled->display();   // Display what's in the buffer (splashscreen)
+  
+    MIDDLE_Y = oled->getLCDHeight() / 2; 
+    MIDDLE_X = oled->getLCDWidth() / 2;
+  }
+  
+  void Fill(){
+    oled->rectFill(1,1,40,40);
+  }
+
+
+  void Clear(){
+    oled->clear(PAGE); // Clear the display's internal memory
+  }
+  
+  void Pt(int x,int y, float val=20.0){
+    if (val<-30.0) val=-30;
+    if (val>63.0) val=-63;
+    
+    float tmp=val*10;
+ //   int offset=map(int(tmp),-300,620,0,63);
+
+    
+    oled->rectFill(4*x+12,4*y,4,4);
+  }
+
+    void Pt32x24(int x,int y, float val=20.0){
+
+    oled->rectFill(2*x,2*y,2,2);
+  }
+
+
+  void FlashPrint(double v){
+    Clear();
+    oled->setFontType(0);                // set font type 0, please see declaration in SFE_MicroOLED.cpp
+    oled->setCursor(1,1);
+    oled->print(v);    
+    Show();
+    delay(10);
+  }
+  
+  void Print(double v,int x=1,int y=1){
+    oled->setFontType(0);                // set font type 0, please see declaration in SFE_MicroOLED.cpp
+    oled->setCursor(x, y); // points cursor to x=27 y=0
+    oled->print(v);
+  }
+  
+  void Show(){
+    oled->display();   // Display what's in the buffer (splashscreen)
+    }
+};
